@@ -1,18 +1,42 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Signup = () => {
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect if already logged in
+  if (user) return <Navigate to="/dashboard" replace />;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && firstName) setSent(true);
+    setError("");
+    setSubmitting(true);
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin + "/dashboard",
+        data: { first_name: firstName },
+      },
+    });
+
+    setSubmitting(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      setSent(true);
+    }
   };
 
   return (
@@ -62,8 +86,13 @@ const Signup = () => {
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
-                  Create Account
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <Button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
+                >
+                  {submitting ? "Sending…" : "Create Account"}
                 </Button>
               </form>
             ) : (

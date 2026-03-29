@@ -1,22 +1,28 @@
 import { Link } from "react-router-dom";
-import { Play, Clock, ArrowRight } from "lucide-react";
+import { Play, Clock, ArrowRight, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import AppLayout from "@/components/AppLayout";
+import { useAuth } from "@/contexts/AuthContext";
 import { mockSessions } from "@/lib/mock-data";
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const creditsRemaining = 3;
   const maxCredits = 5;
   const sessions = mockSessions;
+
+  const displayName = user?.user_metadata?.first_name || user?.email || "there";
 
   return (
     <AppLayout>
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         {/* Greeting */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Welcome back, Alex</h1>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+            Welcome back, {displayName}
+          </h1>
           <p className="mt-1 text-muted-foreground">Ready to practise?</p>
         </div>
 

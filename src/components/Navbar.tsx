@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, User } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,15 +8,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface NavbarProps {
-  isAuthenticated?: boolean;
-  userName?: string;
-}
-
-const Navbar = ({ isAuthenticated = false, userName = "User" }: NavbarProps) => {
+const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const isAuthenticated = !!user;
+  const displayName = user?.user_metadata?.first_name || user?.email || "User";
 
   const navLinks = [
     { to: "/dashboard", label: "Dashboard" },
@@ -25,6 +26,11 @@ const Navbar = ({ isAuthenticated = false, userName = "User" }: NavbarProps) => 
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-card">
@@ -57,13 +63,13 @@ const Navbar = ({ isAuthenticated = false, userName = "User" }: NavbarProps) => 
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
-                        {userName.charAt(0).toUpperCase()}
+                        {displayName.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-sm">{userName}</span>
+                      <span className="text-sm">{displayName}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
                       Sign Out
                     </DropdownMenuItem>
@@ -107,7 +113,10 @@ const Navbar = ({ isAuthenticated = false, userName = "User" }: NavbarProps) => 
                 {link.label}
               </Link>
             ))}
-            <button className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground">
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground"
+            >
               <LogOut className="h-4 w-4" />
               Sign Out
             </button>
