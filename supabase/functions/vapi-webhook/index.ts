@@ -74,7 +74,6 @@ serve(async (req: Request) => {
   }
 
   const vapiCallId: string | undefined = message?.call?.id;
-  const sessionId: string | undefined = message?.call?.metadata?.session_id;
   const messages: any[] = message?.messages ?? [];
   const durationSeconds: number = message?.durationSeconds ?? 0;
 
