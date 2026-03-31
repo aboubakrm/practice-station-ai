@@ -78,11 +78,6 @@ serve(async (req: Request) => {
   const messages: any[] = message?.messages ?? [];
   const durationSeconds: number = message?.durationSeconds ?? 0;
 
-  if (!sessionId) {
-    console.error("No session_id in call metadata");
-    return new Response("Missing session_id", { status: 400 });
-  }
-
   if (!vapiCallId) {
     console.error("No call ID in payload");
     return new Response("Missing call ID", { status: 400 });
@@ -93,6 +88,20 @@ serve(async (req: Request) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
+  // Look up session by vapi_call_id
+  const { data: sessionLookup, error: lookupError } = await supabase
+    .from("sessions")
+    .select("id, case_id")
+    .eq("vapi_call_id", vapiCallId)
+    .single();
+
+  if (lookupError || !sessionLookup) {
+    console.error("No session found for vapi_call_id:", vapiCallId);
+    return new Response("Session not found", { status: 404 });
+  }
+
+  const sessionId = sessionLookup.id;
+
   // Format transcript
   const transcript = messages
     .filter((m) => m.role === "assistant" || m.role === "user")
@@ -102,7 +111,6 @@ serve(async (req: Request) => {
   const { data: sessionData, error: updateError } = await supabase
     .from("sessions")
     .update({
-      vapi_call_id: vapiCallId,
       transcript: transcript,
       duration_seconds: Math.round(durationSeconds),
       status: "processing",
@@ -111,7 +119,6 @@ serve(async (req: Request) => {
     .eq("id", sessionId)
     .select("case_id")
     .single();
-
   if (updateError) {
     console.error("Failed to update session:", updateError.message);
     return new Response("DB update failed", { status: 500 });
