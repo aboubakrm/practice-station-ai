@@ -147,9 +147,20 @@ const Station = () => {
       const vapi = new Vapi(VAPI_PUBLIC_KEY);
       vapiRef.current = vapi;
 
+     vapi.on("call-start", async (call: any) => {
+        if (call?.id) {
+          await supabase
+            .from("sessions")
+            .update({ vapi_call_id: call.id })
+            .eq("id", session.id);
+        }
+      });
+
       vapi.on("call-end", () => {
         handleEndSession();
       });
+
+      await vapi.start(caseData.vapi_assistant_id);
 
       await vapi.start(caseData.vapi_assistant_id, {
         metadata: { session_id: session.id },
